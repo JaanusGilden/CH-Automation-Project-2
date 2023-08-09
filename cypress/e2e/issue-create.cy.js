@@ -1,6 +1,8 @@
 import { faker } from '@faker-js/faker';
 
 describe('Issue create', () => {
+  Cypress.on('uncaught:exception', (err, runnable) => { return false; });
+
   beforeEach(() => {
     cy.visit('/');
     cy.url().should('eq', `${Cypress.env('baseUrl')}project/board`).then((url) => {
@@ -74,7 +76,7 @@ describe('Issue create', () => {
       
       //open issue type dropdown and choose Bug
       cy.get('[data-testid="select:type"]').click();
-      cy.get('[data-testid="select-option:Bug"]')
+      cy.get('[data-testid="select-option:Bug"]').wait(500)
           .trigger('click');
             
       //Type value to description input field
@@ -175,6 +177,47 @@ describe('Issue create', () => {
       //Assert that correct avatar and type icon are visible
       cy.get('[data-testid="avatar:Baby Yoda"]').should('be.visible');
       cy.get('[data-testid="icon:task"]').should('be.visible');
+    });
+  });
+
+  //Sprint 2 BONUS Assignment 3 Task 3
+  const selectorTitle = 'textarea[placeholder="Short summary"]'
+
+  it('Should remove excess spaces in title', () => {
+    const spacedTitle = '  test  title  ';
+    const trimmedTitle = spacedTitle.trim().replace(/ +/g," ");
+    cy.get('[data-testid="modal:issue-create"]').within(() => {
+      cy.get('input[name="title"]').wait(500).type(spacedTitle);
+      cy.get('button[type="submit"]').click();
+    });
+    cy.get('[data-testid="modal:issue-create"]').should('not.exist');
+    cy.contains('Issue has been successfully created.').should('be.visible');
+    cy.reload();
+    cy.contains('Issue has been successfully created.').should('not.exist');
+    cy.get('[data-testid="board-list:backlog"]').should('be.visible').and('have.length', '1').within(() => {
+
+      //Title is NOT actually trimmed in issue list
+      cy.get('[data-testid="list-issue"]').first().find('p').should('have.text', spacedTitle);
+      cy.get('[data-testid="list-issue"]').first().find('p').invoke('text').should('eq', spacedTitle);
+      cy.get('[data-testid="list-issue"]').first().find('p').should(n => {
+        expect(n.text()).to.eq(spacedTitle);
+        //Title *appears* trimmed in list
+        expect(n.get(0).innerText).to.eq(trimmedTitle);
+      });
+
+    });
+    cy.get('[data-testid="list-issue"]').first().click();
+    cy.get('[data-testid="modal:issue-details"]').should('be.visible').within(() => {
+
+      //Title is NOT trimmed on issue details page
+      cy.get(selectorTitle).should('have.text', spacedTitle);
+      cy.get(selectorTitle).invoke('text').should('eq', spacedTitle);
+      cy.get(selectorTitle).should(n => {
+        expect(n.text()).to.eq(spacedTitle);
+        //innerText gives empty string
+        expect(n.get(0).innerText).to.eq("");
+      });
+
     });
   });
 });

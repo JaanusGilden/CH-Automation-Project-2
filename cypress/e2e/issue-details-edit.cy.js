@@ -62,4 +62,26 @@ describe('Issue details editing', () => {
   });
 
   const getIssueDetailsModal = () => cy.get('[data-testid="modal:issue-details"]');
+
+  //Sprint 2 BONUS
+  const selectorPriority = '[data-testid="select:priority"]'
+  const selectorPriorityList = '[data-testid^="select-option:"]'
+
+  it('Check Priority dropdown contents', () => {
+    const expectedLength = 5;
+    let priorities = [];
+    cy.get(selectorPriority).then(p1 => priorities.push(p1.text()));
+    cy.get(selectorPriority).click();
+    cy.get(selectorPriority).next().find(selectorPriorityList).each(p => {
+      priorities.push(p.text());
+      cy.log('Added "' + p.text() + '"\nTotal priority options: ' + priorities.length);
+    }).then(() => {
+      expect(priorities.length).to.eq(expectedLength);
+      expect(priorities).to.deep.eq(["High", "Highest", "Medium", "Low", "Lowest"]);
+    });
+  });
+  
+  it('Check that reporter name has only valid characters', () => {
+    cy.get('[data-testid="select:reporter"]').invoke('text').should('match',/^[A-Za-z ]*$/);
+  });
 });
